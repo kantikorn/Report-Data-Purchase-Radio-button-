@@ -7,6 +7,11 @@ Public Class WebForm1
     Protected Sub Page_Load(ByVal sender As Object, ByVal e As System.EventArgs) Handles Me.Load
         If Not IsPostBack Then
             BindDropDownList()
+            If Not IsPostBack Then
+                ' Add the RowDataBound event handler only during the initial page load
+                AddHandler GridView2.RowDataBound, AddressOf GridView2_RowDataBound
+            End If
+
             GridView2.DataSourceID = ""
             GridView2.DataBind()
         End If
@@ -141,5 +146,24 @@ Public Class WebForm1
             GridView2.DataBind()
         End Using
     End Sub
+    Protected Sub GridView2_RowDataBound(sender As Object, e As GridViewRowEventArgs) Handles GridView2.RowDataBound
+        If e.Row.RowType = DataControlRowType.DataRow Then
+            ' รับค่า OrderQty จากแถวปัจจุบัน
+            Dim orderQty As Integer = Convert.ToInt32(DataBinder.Eval(e.Row.DataItem, "OrderQty"))
+
+            ' ระบุแถว 5 แถวแรกที่มี OrderQty สูงสุดและตกแต่งการแสดงผล
+            Dim top5Rows = (From row In DirectCast(GridView2.DataSource, DataTable).AsEnumerable()
+                            Order By Convert.ToInt32(row("OrderQty")) Descending
+                            Select row).Take(5).ToList()
+
+            If top5Rows.Any(Function(row) row.Equals(DirectCast(e.Row.DataItem, DataRowView).Row)) Then
+                ' ตกแต่งการแสดงผลสำหรับ 5 แถวแรก
+                e.Row.Cells(3).BackColor = Drawing.Color.Red ' ในกรณีที่ OrderQty อยู่ในคอลัมน์ที่ 4 (index 3)
+                e.Row.Cells(3).ForeColor = Drawing.Color.White
+            End If
+        End If
+    End Sub
+
+
 
 End Class
